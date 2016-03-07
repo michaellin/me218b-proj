@@ -84,7 +84,7 @@ bool InitCommSM ( uint8_t Priority )
 ****************************************************************************/
 bool PostCommSM( ES_Event ThisEvent )
 {
-	//printf("PostCommSM Event: %d \r\n",ThisEvent.EventType);
+  //printf("PostCommSM Event: %d \r\n",ThisEvent.EventType);
   return ES_PostToService( MyPriority, ThisEvent);
 }
 
@@ -116,22 +116,22 @@ ES_Event RunCommSM( ES_Event CurrentEvent )
    {
        case WaitingComm :       // If current state is state one
          // no during function
-				// printf("WaitingCom \n\r");
+        // printf("WaitingCom \n\r");
          //process any events
          if ( CurrentEvent.EventType != ES_NO_EVENT ) //If an event is active
          {
             switch (CurrentEvent.EventType)
             {
                case ES_SPIWrite : //If event is event one
-									//printf("Got SPIWrite event\r\n"); 
-									//RunCommandCollectorSM(CurrentEvent); // put this in to pass ES_SPIWrite down to commandcollector
+                  //printf("Got SPIWrite event\r\n"); 
+                  //RunCommandCollectorSM(CurrentEvent); // put this in to pass ES_SPIWrite down to commandcollector
                   // Execute action function for state one : event one
-									// Post to self ES_SendCMD w/ Param1
-									ThisEvent.EventType = ES_SendCMD;
-									ThisEvent.EventParam = CurrentEvent.EventParam;
-									PostCommSM(ThisEvent);
-									//Save the last command you sent as a module level variable so you dont post each query
-									LastCommandSent = CurrentEvent.EventParam;
+                  // Post to self ES_SendCMD w/ Param1
+                  ThisEvent.EventType = ES_SendCMD;
+                  ThisEvent.EventParam = CurrentEvent.EventParam;
+                  PostCommSM(ThisEvent);
+                  //Save the last command you sent as a module level variable so you dont post each query
+                  LastCommandSent = CurrentEvent.EventParam;
                   NextState = SendingComm;//Decide what the next state will be
                   // for internal transitions, skip changing MakeTransition
                   MakeTransition = true; //mark that we are taking a transition
@@ -143,24 +143,24 @@ ES_Event RunCommSM( ES_Event CurrentEvent )
             }
          }
          break;
-			case SendingComm :
-				CurrentEvent = DuringSendingComm(CurrentEvent); 
-				switch (CurrentEvent.EventType)
-				{
-					case ES_TIMEOUT : 
-						if (CurrentEvent.EventParam == PacTimer){ 
-								NextState = WaitingComm;
-								MakeTransition = true;
-								ReturnEvent.EventType = ES_NO_EVENT;
-								// Generate an event to indicate transfer is done
-								//if the last command sent was not a query then post
-								ThisEvent.EventType = ES_SPIWriteDone; //Send indicator that SPI write is done
-								PostMasterSM(ThisEvent); // not sure whether or not we need this
-								PostCaptureCityService(ThisEvent);
-						}
-					break;
-				}
-			break;			
+      case SendingComm :
+        CurrentEvent = DuringSendingComm(CurrentEvent); 
+        switch (CurrentEvent.EventType)
+        {
+          case ES_TIMEOUT : 
+            if (CurrentEvent.EventParam == PacTimer){ 
+                NextState = WaitingComm;
+                MakeTransition = true;
+                ReturnEvent.EventType = ES_NO_EVENT;
+                // Generate an event to indicate transfer is done
+                //if the last command sent was not a query then post
+                ThisEvent.EventType = ES_SPIWriteDone; //Send indicator that SPI write is done
+                PostMasterSM(ThisEvent); // not sure whether or not we need this
+                PostCaptureCityService(ThisEvent);
+            }
+          break;
+        }
+      break;      
       // repeat state pattern as required for other states
     }
     //   If we are making a state transition
@@ -225,7 +225,7 @@ static ES_Event DuringSendingComm( ES_Event Event)
         //printf("In DuringSendingComm in high level SM\r\n");
         // after that start any lower level machines that run in this state
         StartSendingCommSM(Event);
-				//StartCommandCollectorSM(Event);
+        //StartCommandCollectorSM(Event);
         // repeat the StartxxxSM() functions for concurrent state machines
         // on the lower level
     }
@@ -233,7 +233,7 @@ static ES_Event DuringSendingComm( ES_Event Event)
     {
         // on exit, give the lower levels a chance to clean up first
         RunSendingCommSM(Event);
-				//RunCommandCollectorSM(Event);
+        //RunCommandCollectorSM(Event);
         // repeat for any concurrently running state machines
         // now do any local exit functionality
       
@@ -242,7 +242,7 @@ static ES_Event DuringSendingComm( ES_Event Event)
     {
         // run any lower level state machine
         RunSendingCommSM(Event);
-				//RunCommandCollectorSM(Event);
+        //RunCommandCollectorSM(Event);
       
         // do any activity that is repeated as long as we are in this state
     }

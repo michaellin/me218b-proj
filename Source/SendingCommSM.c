@@ -78,51 +78,51 @@ ES_Event RunSendingCommSM( ES_Event CurrentEvent )
          // Execute During function for state one. ES_ENTRY & ES_EXIT are
          // processed here allow the lower level state machines to re-map
          // or consume the event
-					
+          
          //process any events
-				switch (CurrentEvent.EventType)
-				{
-					 case ES_SendCMD : //If event is event one
-							// Execute action function for state one : event one
-							//Keep the byte that we are trying to send
-   						Byte2Send = CurrentEvent.EventParam;
-							//printf("SPI sending command 0x%x\r\n", Byte2Send);
-							NextState = SendingAllBytes;//Decide what the next state will be
-							// for internal transitions, skip changing MakeTransition
-							//mark that we are taking a transition
-							MakeTransition = true;
-							// if transitioning to a state with history change kind of entry
-							EntryEventKind.EventType = ES_ENTRY;
-							// optionally, consume or re-map this event for the upper
-							// level state machine
-							ReturnEvent.EventType = ES_NO_EVENT;
-							break;
-				}
-				break;
-			case SendingAllBytes : 
-				CurrentEvent = DuringSendingAllBytes(CurrentEvent);
-				ES_Event ThisEvent;
-				switch (CurrentEvent.EventType)
-				{
-					case ES_EOT:
-						// We took the following post out, because we want to do it after the 2 ms timer is up (Moved to CommService)
-						//ThisEvent.EventType = ES_SPIWriteDone; //Send indicator that SPI write is done
-						//PostMasterSM(ThisEvent);
-						ES_Timer_InitTimer(PacTimer, 2); // Wait 2 ms between transactions
-						ReturnEvent.EventType = ES_NO_EVENT;
-					break;
-					case ES_TIMEOUT:
-						if (CurrentEvent.EventParam == PacTimer) {
-							//printf("Getting back to ready to send\r\n");
-							NextState = WaitingInSend;
-							MakeTransition = true;
-							//Do not consume event so that higher level can transition as well
-//							ReturnEvent.EventType = ES_NO_EVENT;
-						}
-					break;
-				}
-			break;
-		}
+        switch (CurrentEvent.EventType)
+        {
+           case ES_SendCMD : //If event is event one
+              // Execute action function for state one : event one
+              //Keep the byte that we are trying to send
+               Byte2Send = CurrentEvent.EventParam;
+              //printf("SPI sending command 0x%x\r\n", Byte2Send);
+              NextState = SendingAllBytes;//Decide what the next state will be
+              // for internal transitions, skip changing MakeTransition
+              //mark that we are taking a transition
+              MakeTransition = true;
+              // if transitioning to a state with history change kind of entry
+              EntryEventKind.EventType = ES_ENTRY;
+              // optionally, consume or re-map this event for the upper
+              // level state machine
+              ReturnEvent.EventType = ES_NO_EVENT;
+              break;
+        }
+        break;
+      case SendingAllBytes : 
+        CurrentEvent = DuringSendingAllBytes(CurrentEvent);
+        ES_Event ThisEvent;
+        switch (CurrentEvent.EventType)
+        {
+          case ES_EOT:
+            // We took the following post out, because we want to do it after the 2 ms timer is up (Moved to CommService)
+            //ThisEvent.EventType = ES_SPIWriteDone; //Send indicator that SPI write is done
+            //PostMasterSM(ThisEvent);
+            ES_Timer_InitTimer(PacTimer, 2); // Wait 2 ms between transactions
+            ReturnEvent.EventType = ES_NO_EVENT;
+          break;
+          case ES_TIMEOUT:
+            if (CurrentEvent.EventParam == PacTimer) {
+              //printf("Getting back to ready to send\r\n");
+              NextState = WaitingInSend;
+              MakeTransition = true;
+              //Do not consume event so that higher level can transition as well
+//              ReturnEvent.EventType = ES_NO_EVENT;
+            }
+          break;
+        }
+      break;
+    }
     //   If we are making a state transition
     if (MakeTransition == true)
     {  //printf("NextState: %d \n\r",NextState);
@@ -135,8 +135,8 @@ ES_Event RunSendingCommSM( ES_Event CurrentEvent )
        //   Execute entry function for new state
        // this defaults to ES_ENTRY
        RunSendingCommSM(EntryEventKind);
-		}
-		return(ReturnEvent);
+    }
+    return(ReturnEvent);
 }
 /****************************************************************************
  Function
@@ -204,12 +204,12 @@ static ES_Event DuringSendingAllBytes( ES_Event Event)
          (Event.EventType == ES_ENTRY_HISTORY) )
     {
         // implement any entry actions required for this state machine
-				//printf("Entered During Sending All Bytes\r\n");
+        //printf("Entered During Sending All Bytes\r\n");
         HWREG(SSI0_BASE+SSI_O_DR) = Byte2Send; //Send the first byte
-				HWREG(SSI0_BASE+SSI_O_DR) = 0;
-				HWREG(SSI0_BASE+SSI_O_DR) = 0;
-				HWREG(SSI0_BASE+SSI_O_DR) = 0;
-				HWREG(SSI0_BASE+SSI_O_DR) = 0; //Send the fifth byte
+        HWREG(SSI0_BASE+SSI_O_DR) = 0;
+        HWREG(SSI0_BASE+SSI_O_DR) = 0;
+        HWREG(SSI0_BASE+SSI_O_DR) = 0;
+        HWREG(SSI0_BASE+SSI_O_DR) = 0; //Send the fifth byte
 
         // repeat the StartxxxSM() functions for concurrent state machines
         // on the lower level
@@ -226,25 +226,25 @@ static ES_Event DuringSendingAllBytes( ES_Event Event)
         // run any lower level state machine
       
         // repeat for any concurrent lower level machines
-				if (Event.EventType == ES_EOT) { //If we are done sending all 5 bytes
-					uint8_t Reading;
-					Reading = HWREG(SSI0_BASE+SSI_O_DR) & 0x000000FF;
-					//printf("First byte is 0x%x\r\n", Reading);
-					StoreByte(Reading,1);
-					Reading = HWREG(SSI0_BASE+SSI_O_DR) & 0x000000FF;
-					//printf("Second byte is 0x%x\r\n", Reading);
-					StoreByte(Reading,2);
-					Reading = HWREG(SSI0_BASE+SSI_O_DR) & 0x000000FF;
-					//printf("Third byte is 0x%x\r\n", Reading);
-					StoreByte(Reading,3);
-					Reading = HWREG(SSI0_BASE+SSI_O_DR) & 0x000000FF;
-					//printf("Fourth byte is 0x%x\r\n", Reading);
-					StoreByte(Reading,4);
-					Reading = HWREG(SSI0_BASE+SSI_O_DR) & 0x000000FF;
-					//printf("Fifth byte is 0x%x\r\n", Reading);
-					StoreByte(Reading,5);
-					//Should post here that new transaction is ready to be read
-				}
+        if (Event.EventType == ES_EOT) { //If we are done sending all 5 bytes
+          uint8_t Reading;
+          Reading = HWREG(SSI0_BASE+SSI_O_DR) & 0x000000FF;
+          //printf("First byte is 0x%x\r\n", Reading);
+          StoreByte(Reading,1);
+          Reading = HWREG(SSI0_BASE+SSI_O_DR) & 0x000000FF;
+          //printf("Second byte is 0x%x\r\n", Reading);
+          StoreByte(Reading,2);
+          Reading = HWREG(SSI0_BASE+SSI_O_DR) & 0x000000FF;
+          //printf("Third byte is 0x%x\r\n", Reading);
+          StoreByte(Reading,3);
+          Reading = HWREG(SSI0_BASE+SSI_O_DR) & 0x000000FF;
+          //printf("Fourth byte is 0x%x\r\n", Reading);
+          StoreByte(Reading,4);
+          Reading = HWREG(SSI0_BASE+SSI_O_DR) & 0x000000FF;
+          //printf("Fifth byte is 0x%x\r\n", Reading);
+          StoreByte(Reading,5);
+          //Should post here that new transaction is ready to be read
+        }
         // do any activity that is repeated as long as we are in this state
     }
     // return either Event, if you don't want to allow the lower level machine
@@ -253,50 +253,50 @@ static ES_Event DuringSendingAllBytes( ES_Event Event)
 }
 
 void EOT_Response (void){
-	//Post event to get into the state
-	ES_Event ThisEvent;
-	ThisEvent.EventType = ES_EOT;
-	PostCommSM(ThisEvent);
+  //Post event to get into the state
+  ES_Event ThisEvent;
+  ThisEvent.EventType = ES_EOT;
+  PostCommSM(ThisEvent);
 }
 
 /***************************************************************************
 Public Helper Funcitons
  ***************************************************************************/
 void StoreByte (uint8_t Reading,uint8_t ByteNumber){
-	uint8_t WhichCommand = Byte2Send;
-	if( (WhichCommand & CommandMask) == StatusRequest ){ // This is a Status request
-		StatusArray[ByteNumber-1] = Reading;
-	} else if( (WhichCommand & CommandMask) == ChangeCityRequest ){ // This is a Change request
-		ChangeCityArray[ByteNumber-1] = Reading;
-	} else if( (WhichCommand & CommandMask) == Query ){ // This is a Query
-		QueryArray[ByteNumber-1] = Reading;
-	}
+  uint8_t WhichCommand = Byte2Send;
+  if( (WhichCommand & CommandMask) == StatusRequest ){ // This is a Status request
+    StatusArray[ByteNumber-1] = Reading;
+  } else if( (WhichCommand & CommandMask) == ChangeCityRequest ){ // This is a Change request
+    ChangeCityArray[ByteNumber-1] = Reading;
+  } else if( (WhichCommand & CommandMask) == Query ){ // This is a Query
+    QueryArray[ByteNumber-1] = Reading;
+  }
 }
 
 uint8_t RR_Read(void){
-	uint8_t RR;
-	RR = QueryArray[2]; //return the third byte
-	//printf("RR: %x \n\r",RR);
-	return RR;
+  uint8_t RR;
+  RR = QueryArray[2]; //return the third byte
+  //printf("RR: %x \n\r",RR);
+  return RR;
 }
 uint8_t RS_Read(void){
-	uint8_t RS;
-	RS = QueryArray[3]; //return the fourth byte
-	//printf("RS: %x \n\r",RS); 
-	return RS;
+  uint8_t RS;
+  RS = QueryArray[3]; //return the fourth byte
+  //printf("RS: %x \n\r",RS); 
+  return RS;
 }
 uint8_t SS1_Read(void){
-	uint8_t SS1;
-	SS1 = StatusArray[2];
-	return SS1;
+  uint8_t SS1;
+  SS1 = StatusArray[2];
+  return SS1;
 }
 uint8_t SS2_Read(void){
-	uint8_t SS2;
-	SS2 = StatusArray[3];
-	return SS2;
+  uint8_t SS2;
+  SS2 = StatusArray[3];
+  return SS2;
 }
 uint8_t SS3_Read(void){
-	uint8_t SS3;
-	SS3 = StatusArray[4];
-	return SS3;
+  uint8_t SS3;
+  SS3 = StatusArray[4];
+  return SS3;
 }

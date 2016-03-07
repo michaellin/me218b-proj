@@ -182,7 +182,7 @@ static ES_Event DuringMaster( ES_Event Event)
        
         // after that start any lower level machines that run in this state
         StartGameServiceSM( Event );
-				StartNavigationSM( Event );
+        StartNavigationSM( Event );
         // repeat the StartxxxSM() functions for concurrent state machines
         // on the lower level
     }
@@ -190,7 +190,7 @@ static ES_Event DuringMaster( ES_Event Event)
     {
         // on exit, give the lower levels a chance to clean up first
         RunGameServiceSM( Event );
-				RunNavigationSM( Event );
+        RunNavigationSM( Event );
         // repeat for any concurrently running state machines
         // now do any local exit functionality
       
@@ -199,8 +199,8 @@ static ES_Event DuringMaster( ES_Event Event)
     {
         // run any lower level state machine
         // ReturnEvent = RunLowerLevelSM(Event);
-				RunGameServiceSM( Event );
-				RunNavigationSM( Event );
+        RunGameServiceSM( Event );
+        RunNavigationSM( Event );
         // repeat for any concurrent lower level machines
       
         // do any activity that is repeated as long as we are in this state
