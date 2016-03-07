@@ -1,0 +1,64 @@
+Pseudo Code for CommService Hierarchical State Machine
+Module variables: CurrentState, MyPriority, LastCommandSent
+CurrentState could be: WaitingComm, SendingComm
+
+
+InitCommSM
+takes uint8_t Priority value assigned to current service, returns bool for success or failure of init
+  Set MyPriority as Priority input
+  Initialize ES_event with ES_ENTRY as event type
+  Call StartCommSM with this event
+  return true
+end InitCommSM
+
+
+PostCommSM
+takes ThisEvent which is the event to be posted to CommService and returns bool
+  call ES_PostToService with MyPriority and Event to be posted
+end PostCommSM
+
+
+RunCommSM
+takes ES_Event which is the current event being handled and returns ES_Event which could be a pending event or no event
+  Assign CurrentState to NextState assuming that there is no transition of State
+  Initialize EventryEventKind and default to ES_ENTRY
+  Initialize ReturnEvent and default to ES_NO_EVENT
+  If state is WaitingComm
+    If Event is ES_SPIWrite
+      Initialize new event ES_SendCMD with the parameter from the ES_SPIWrite and post it to self
+      Set LastCommandSent to current event parameter
+      Change Next state to be SendingComm and turn MakeTransition true to indicate transition in state
+    endif
+  endif
+  If state is SendingComm
+    Call DuringSendingComm and assign the return value to CurrentEvent
+    if CurrentEvent is ES_TIMEOUT and Event parameter is PacTimer
+      Change next state ot be WaitingComm
+      Consume the Current event
+      Post ES_SPIWriteDone to all service that use CommService to indicate that SPI is ready for new command
+    endif
+  endif
+end RunCommSM
+
+
+StartCommSM
+takes CurrentEvent and returns nothing
+  Set current state to our entry state: WaitingComm
+  Call RunCommSM with CurrentEvent
+end StartCommSM
+
+
+DuringSendingComm
+Takes ES_Event and returns ES_Event
+  Set ReturnEvent to input event
+  if event is ES_Entry or ES_Entry_History
+    Call sub-state machine StartSendingComm with input Event
+  else if event is ES_Exit
+    Call sub-state machine RunSendingComm with exit Event to exit it
+    assign function call return to ReturnEvent
+  else
+    Call sub-state machine RunSendingComm with whatever event that was passed in
+    assign function call return to ReturnEvent
+  endif
+  return ReturnEvent
+end DuringSendingComm
