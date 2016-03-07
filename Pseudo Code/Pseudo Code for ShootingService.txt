@@ -1,0 +1,65 @@
+Pseudo Code for ShootingService
+Psuedo Code for ShootingService
+
+InitShootingService
+Takes a priority number, returns True
+
+Initialize the MyPriority variable with the passed in parameter
+Set the current state to Waiting2ShootState
+Set the C servo to go to the middle position
+Set the shooting servo to be in the up position
+End of InitCaptureCityService
+
+PostShootingService
+Takes an event to post, returns True if event was posted
+End of PostCaptureCityService
+
+RunShootingService
+The EventType field of ThisEvent will be one of: ES_StartShooting, ES_TIMEOUT, 
+
+Switch between the current state:
+	
+	Case: Current State is Waiting2Shoot
+		If there is an ES_StartShooting event
+			Set the shooting servo to the down position
+			Set next state to ShootingServoDownState
+			Start the shooting timer
+	End case
+
+	Case: Current State is ShootingServoDownState
+		If there is a shooting timer timeout
+			Set the shooting servo to be in the up position
+			Set the current state to ShootingServoUpState
+			Start the shooting timer to go to next state
+	EndCase
+	
+	Case: Current State is ShootingServoUpState
+		If there is a shooting timer timeout
+			Set the C servo to be in the down position
+			Set the current state to CServoDownState
+			Start the shooting timer to go to next state
+	EndCase
+
+	Case: Current State is CServoDownState
+		If there is a shooting timer timeout
+			Set the C servo to be in the up position
+			Set the current state to CServoUpState
+			Start the shooting timer to go to next state
+	EndCase
+
+	Case: Current State is CServoUpState
+		If there is a shooting timer timeout
+			Set the C servo to be in the middle position
+			Set the current state to CServoMiddleState
+			Start the shooting timer to go to next state
+	EndCase
+
+	Case: Current State is CServoMiddleState
+		If there is a shooting timer timeout
+			Set the current state back to Waiting2ShootState
+			Pos ES_BallShot to MasterSM (Navigation will respond)
+	EndCase
+End of RunShootingService
+
+
+

@@ -1,0 +1,109 @@
+Pseudo Code for SendingCommSM
+
+module variables: CurrentState, ReturnEvent, Byte2Send, StatusArray, ChangeCityArray, QueryArray
+
+
+RunSendingCommSM
+	takes ES_Event as input and returns ES_Event
+	Set NextState to be CurrentState, assume no transitions
+	Initialize EntryEventKind to ES_Entry
+	Set ReturnEvent to CurrentEvent, assume event will be propagated up
+
+	if CurrentState is WaitingInSend
+		if Event is ES_SendCMD
+			Set Byte2Send to Event parameter
+			Change NextState to SendingAllBytes
+			Change MakeTransition flag to true
+			Set EntryEventKind to ES_Entry for the transition
+			Set ReturnEvent to ES_No_Event to consume the event
+		endif
+	else if SendingAllBytes
+		Call DuringSendingAllBytes with CurrentEvent as input
+		Assign the return from the function to CurrentEvent
+		if Event is ES_EOT
+			Initialize a 2ms timer to give time between two transactions
+			Set ReturnEvent to ES_NO_Event to consume the event
+		else if Event is ES_Timeout and Event parameter is PacTimer
+			Set NextState to WaitingInSend
+			Change MakeTransition to be true
+		endif
+	endif
+	if MakeTransition is true
+		Set CurrentEvent to ES_Exit
+		Call RunSendingComm with ES_Exit
+		Set CurrentState now to NextState to transition
+		Call RunSendingComm with ES_Enty
+	endif
+	return ReturnEvent
+
+end RunSendingCommSM
+
+
+StartSendingCommSM
+	takes ES_Event as input and returns nothing
+	if event input is ES_Entry
+		Set CurrentState = ENTRY_STATE
+	endif
+	Call RunSendingCommSM with Event as input
+	return whatever the function call returns
+end StartSendingCommSM
+
+
+DuringSendingAllBytes
+	takes in ES_Event and return ES_Event
+	Set ReturnEvent to input event
+	if input event is ES_Entry or ES_Entry_history
+		Write Byte2Send to TXFIFO register
+		Write 0 to TXFIFO register 4 times
+	else if input event is ES_Exit
+		do nothing
+	else
+		if Event is ES_EOT
+			Read from register RXFIFO and call StoreByte with this reading as input
+			Do same 5 times
+		endif
+
+	endif
+	return ReturnEvent
+end DuringSendingAllBytes
+
+
+EOT_Response
+	takes nothing and returns nothing
+	Post ES_EOT to CommSM to indicate end of transmission
+end EOT_Response	
+
+
+StoreByte
+	takes two uint8_t: Reading containing the information to be stored, ByteNumber, which byte number the info corresponds to. Returns nothing.
+	Switch Byte2Send
+		StatusRequest case: Set Reading to StatusArray 
+		ChangeCityRequest case: Set Reading to ChangeCityArray
+		QueryRequest case: Set Reading to QueryArray
+	end switch
+end StoreByte
+
+RR_Read
+	takes nothing returns uint8_t
+	return third element of QueryArray
+end RR_Read
+
+RS_Read
+	takes nothing returns uint8_t
+	return fourth element of QueryArray
+end RS_Read
+
+SS1_Read
+	takes nothing returns uint8_t
+	return third element of StatusArray
+end SS1_Read
+
+SS2_Read
+	takes nothing returns uint8_t
+	return fourth element of StatusArray
+end SS2_Read
+
+SS3_Read
+	takes nothing returns uint8_t
+	return fifth element of StatusArray
+end SS3_Read

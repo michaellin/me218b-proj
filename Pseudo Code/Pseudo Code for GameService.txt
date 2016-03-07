@@ -1,0 +1,142 @@
+Pseudo Code for GameService
+
+Psuedo Code for GameService 
+
+RunGameServiceSM
+
+Start by setting the make transition variable to false
+Set next state to current state
+Set the entry event kind ES_Entry
+Set the return event as the current event
+
+Switch between the current state
+	Case: Waiting4Campaign
+		Execute the DuringWaiting4Campaign function
+		Switch between the current event
+			If the current event is ES_StartCampaign
+				Set next state to Campaigning_StopAtCity
+				Consume the event
+	EndCase
+		
+	Case: Campaigning_StopAtCity
+		Execute the During Campaigning_StopAtCity function
+			If the current event is ES_AtCity
+				Post to master to stop the motors
+				Switch next state to Campaigning_CapturingCity
+Post ES_StartCaptureCity to this service and then in next state post it to CaptureCity service
+			Else if the current event is ES_GameOver
+				Set next state to Waiting4Campaign
+				Consume the event
+EndCase
+
+	Case: Campaigning_CapturingCity
+		Execute the DuringCampaigning_CapturingCity function
+			If the current event is ES_StartCaptureCity
+				Post the same event to capture city service
+			Else if the current event is ES_GameOver
+				Set next state to Waiting4Campaign
+				Consume the event
+			Else if the current event is ES_IgnoreCity	
+				Set the next state to Campaigning_DontStopAtCity
+			Else if the current event is a timeout for the MakeSureNotStuckTimer
+				Set the next state Campaigning_DontStopAtCity
+			Else if the current event is ES_BallShot
+				Set the next state to ShootingInCampaign
+			Else if the current event is ES_AtCity
+				Post ES_StartCaptureCity to Capture City Service
+	EndCase
+
+	Case: ShootingInCampaign
+		If the current event is ES_WireFollow
+			Set the Campaign Timer for 1 second
+		Else if the current event is a timeout for the campaign timer
+			Set the next state to Campaigning_DontStopAtCity
+		Else if the current event is ES_GameOver
+			Set the next state to Waiting4Camapaign
+			Consume the event
+	End Case
+
+	 Case: Campaigning_DontStopAtCity
+		Execute the DuringCampaigning_NotStoppping function
+		If the current event is a campaign timer timeout
+			Set the next state to Campaigning_StopAtCity
+		Else if the current event is ES_GameOver
+			Set the next state to Waiting4Camapaign
+			Consume the event
+	End Case
+
+End RunGameServiceSM
+
+StartGameServiceSM
+Call the RunGameServiceSM function with the current event as ES_Entry
+End StartGameServiceSM
+
+DuringWaiting4Campaign
+Set the return event as the event passed in the argument
+If the event is an ES_Entry
+	Set the InCampaign variable to false
+	Post ES_Celebrate to LEDService
+	Request the game status
+	Start the GameStatus timer for 200ms
+	Post ES_StopMotors to MasterSM
+Else if the event is an ES_Exit
+	Start by posting wirefollow to MasterSM
+	Post ES_StopCelebration to LED Service
+Else 
+	If this event is a game status timer timeout
+		If the game has started (Check SS3)
+			Post ES_StartCampaign to MasterSM
+		Else 
+			Request the game status (SS3)
+			Start the GameStatus Timer for 200 ms
+Return the return event
+End DuringWaiting4Campaign
+
+DuringCampaigning_StoppingAtCity
+Return the return event
+End DuringCampaigning_StoppingAtCity
+
+
+DuringCampaigning_CapturingCity
+Set the return event as the event passed in the argument
+If the event is an ES_Entry
+	Start the MakeSureNotStuckTimer for 4 seconds
+Else if the event is an ES_Exit
+	Stop the MakeSureNotStuckTimer
+Else 
+	Do nothing
+Return the return event
+End DuringCampaigning_CapturingCity
+
+DuringCampaigning_NotStopping
+Set the return event as the event passed in the argument
+If the event is an ES_Entry
+	Start the Campaign timer for 1.5 seconds
+	Post ES_WireFollow to MasterSM
+Else if the event is an ES_Exit
+	Do nothing
+Else 
+	Do nothing
+Return the return event
+End DuringCampaigning_NotStopping
+
+DuringShootingInCampaign
+Set the return event as the event passed in the argument
+If the event is an ES_Entry
+	//Do nothing
+Else if the event is an ES_Exit
+	Do nothing
+Else 
+	Do nothing
+Return the return event
+End DuringShootingInCampaign
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,42 @@
+Pseudo Code for MasterSM
+
+Psuedo Code for MasterSM
+
+InitMasterSM
+Takes a priority number, returns True
+
+Initialize the MyPriority variable with the passed in parameter
+Start the Master State machine with an ES_Entry
+
+PostMasterSM
+Takes an event to post, returns True if event was posted
+End of PostCaptureCityService
+
+RunMasterSM
+
+Start by passing events to the lower level machines by running DuringMaster function
+Return an ES_No_Event
+End of RunMasterSM
+
+StartMasterSM
+Call the RunMaserSM function with the CurrentEvent
+End of StartMasterSM
+
+DuringMaster
+Set the return event as the event passed in the argument
+
+If the event is an ES_Entry
+	Start the lower level State machines (GameServiceSM and NavigationSM)
+Else if the event is an ES_Exit
+	Run the lower levels with the ES_Exit event (GameServiceSM and NavigationSM)
+	
+Else 
+	Run the lower level state machines (GameServiceSM and NavigationSM)
+Return the return event
+
+End DuringMaster
+
+
+
+   
+

@@ -1,0 +1,107 @@
+Pseudo Code for CaptureCityService
+
+Psuedo Code for CaptureCityService
+
+InitCaptureCityService
+Takes a priority number, returns True
+
+Initialize the MyPriority variable with the passed in parameter
+Set the current state to WaitingCapture
+End of InitCaptureCityService
+
+PostCaptureCityService
+Takes an event to post, returns True if event was posted
+End of PostCaptureCityService
+
+RunCaptureCityService
+The EventType field of ThisEvent will be one of: ES_SwitchTeam, ES_StartCaptureCity, ES_SPIWriteDone, ES_TIMEOUT, ES_OkToWaitCapture.
+
+If there is an ES_SwitchTeam Event
+	If current color is read
+		Change to blue team
+		Turn on blue LED
+	Else
+		Change to red team
+		Turn on red LED
+
+Switch between the current state:
+	
+	Case: Current State is WaitingCapture
+		If there is an ES_StartCaptureCity event
+			Get frequency of city
+			Send request command with that frequency as parameter
+			Set next state to RequestingChange1
+	End case
+
+	Case: Current State is RequestingChange1
+		If there is an ES_SPIWriteDone Event
+			Start a query timer
+		Else if there is a query timer timeout
+			Send a query 
+			Set next state to QueryingChange1
+	End Case
+
+	Case: QuerryingChange1
+		Read Response ready byte
+			If the response is not ready
+				Restart query timer
+			Else if the response is ready
+				Go to ReadingFirstResponse state
+				Start the capture timer
+	End case
+
+	Case: ReadingFirstResponse
+		If there is a capture timer timeout
+			If RS returns a nack
+				Set next state to waitingcapture
+			Else if RS returns an ack
+				Set the next state to RequestingChange2
+				Start the capture timer for at least 200ms
+			Else if RS returns a Blocked
+				Set the current state to WaitingCapture
+			Else if the RS return a Busy
+				Set the current state to WaitingCaptures
+	End Case
+	
+
+	Case: RequestingChange2
+		If there is a capture timer timeout
+			Get the new frequency of the city
+			Send Request command with that frequency as the parameter
+			Post command to CommSM
+		Else if there is an ES_SPIWriteDone event
+			Start the query timer
+		Else if there is a query timer timeout
+			Set the next state to QueringChagne2
+Send a query command
+	End Case
+
+	Case: Querying
+		If there is an ES_SPIWriteDone event
+			Read the response ready byte
+			If the response is not ready
+				Restart the query timer
+			Else if the response is ready
+				Set the next state to ReadingSecondResponse
+				Start the capture timer
+	End Case
+
+	Case: ReadingSecondResponse 
+		If there is a capture timer timeout
+			Read the RS byte
+			If RS returns Nack or blocked or busy
+				Set the next state to waitingcapture
+			Else if RS return ACK
+				Read the rest of the status byte to tell what city your at
+				Post to navigagtion that we got a city name 
+				Post to GameService ES_IgnoreCity so that we move on from city
+				Set next state to captured state
+	End Case
+
+	Case: CaptureState
+		If the event is ES_OkToWaitCapture
+			The set the current state to WaitingCapture
+	EndCase
+		
+End of RunCaptureCityService
+

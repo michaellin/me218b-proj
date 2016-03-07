@@ -1,0 +1,109 @@
+Pseudo Code for LEDService
+
+InitLEDService
+Takes 8-bit variable “Priority,” returns boolean true or false.
+
+Pass input parameter to static variable “MyPriority”
+Call InitLEDStrip function to initialize LED strip hardware
+Return true
+
+End
+
+PostLEDService
+Takes ES_Event “ThisEvent,” returns boolean true or false.
+
+Return ES_PostToService with params “MyPriority” and input param “ThisEvent”
+
+End
+
+RunLEDService
+Takes ES_Event “ThisEvent,” returns ES_Event.
+
+Set ReturnEvent to ES_NO_EVENT
+If input event is ES_Celebrate
+	Start 150 ms celebration timer
+Else if input event is a celebration timer timeout
+	If counter is less than 5
+		Set all LEDs low
+Set certain LEDs high to produce the color in ColorArray corresponding to current counter value
+		Start 150 ms celeb timer
+		Increment counter by 1
+	Else if counter is greater than or equal to 5	
+		Set all LEDs low
+Set certain LEDs high to produce the color in ColorArray corresponding to current counter value
+Start 50 ms celeb timer
+Reset counter to 0
+	Else if input event is ES_StopCelebrate
+		Stop celeb timer
+	Endif
+Endif
+Return ReturnEvent
+
+End
+
+InitLEDStrip
+Takes nothing, returns nothing.
+
+Enable clock to port E
+Enable clock to port B
+Kill a few clock cycles
+Enable E2, E3, and B2 for GPIO
+Set E2, E3, and B2 to be digital outputs
+Set E2, E3, and B2 all low (turn off all LEDs)
+
+End
+
+SetLEDHigh
+Takes 8 bit “Color,” returns nothing.
+
+If Color is AllColors
+	Set all LEDs high
+Else if Color is Red
+	Set Red LED high
+Else if Color is Green
+	Set Green LED high
+Else if Color is Blue
+	Set Blue LED high
+Else if Color is Teal
+	Set Blue and Green LEDs high
+Else if Color is purple
+	Set Blue and Red LEDs high
+Else if color is orange
+	Set Red and Green LEDs high
+Endif
+
+End
+
+SetLEDLow
+Takes 8-bit “Color,” returns nothing.
+
+If Color is AllColors
+	Set all LEDs low
+Else
+	If Color is Red
+		Set Red LED low
+	Else if Color is green
+		Set Green LED low
+	Else if Color is blue
+		Set Blue LED low
+	Endif
+Endif
+ 
+End
+
+SetRedLED
+Takes nothing, returns nothing.
+
+Calls SetLEDLow with param AllColors
+Calls SetLEDHigh with param Red
+
+End
+
+SetBlueLED
+Takes nothing, returns nothing.
+
+Calls SetLEDLow with param AllColors
+Calls SetLEDHigh with param Blue
+
+End
+
