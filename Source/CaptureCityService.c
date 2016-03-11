@@ -350,7 +350,7 @@ ES_Event RunCaptureCityService( ES_Event ThisEvent )
               ThisEvent.EventType = ES_IgnoreCity;
               PostMasterSM(ThisEvent);
               //Go to captured state
-              CurrentState  = CapturedState;
+              CurrentState  = WaitingCapture;
             }
           }
           else {

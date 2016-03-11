@@ -23,9 +23,10 @@ Flat state machine to detect city frequency
 #include "inc/hw_timer.h"
 
 /*---------------------------- Module Defines ---------------------------*/
-#define FREQ_TOL   30 //City frequency tolerance
-#define TicksPerUs 40 // 40 ticks per us
-#define ALL_BITS   (0xff<<2)
+#define FREQ_TOL     30 //City frequency tolerance
+#define TicksPerUs   40 // 40 ticks per us
+#define ALL_BITS     (0xff<<2)
+#define UNKNOWN_CITY 16
 
 /*---------------------------- Module Variables ---------------------------*/
 static uint8_t MyPriority;
@@ -33,7 +34,7 @@ static DetectCityFrequency_t CurrentState;
 static uint32_t CityPeriod; //Current city period updated by input capture
 static uint32_t ValidCityPeriod;
 static uint32_t LastValidCityPeriod;
-static uint8_t  CandidateCityValue = 16; //just use a value different from ReturnCityValue
+static uint8_t  CandidateCityValue = UNKNOWN_CITY; //just use a value different from ReturnCityValue
 
 /*---------------------------- Module Constants ---------------------------*/
 static const uint32_t ValidCityFreqs[16] = {TicksPerUs*1333, TicksPerUs*1277, TicksPerUs*1222, TicksPerUs*1166,
@@ -93,7 +94,7 @@ ES_Event RunDetectCityFrequencyService( ES_Event ThisEvent )
     case CheckingCityFrequency:
       if ((ThisEvent.EventType == ES_TIMEOUT) && (ThisEvent.EventParam == CityFrequencyTimer)) {
         whichCity = CheckCityPeriod();
-        if ((whichCity != 16)){// && (LastValidCityPeriod != whichCity)) { //If city is not 16 then we found a valid city
+        if ((whichCity != UNKNOWN_CITY)){// && (LastValidCityPeriod != whichCity)) { //If city is not 16 then we found a valid city
           ES_Event ThisEvent;
           ThisEvent.EventType = ES_AtCity;
           ThisEvent.EventParam = whichCity;
@@ -109,8 +110,8 @@ ES_Event RunDetectCityFrequencyService( ES_Event ThisEvent )
         ThisEvent.EventType = ES_NotAtCity;
         PostMasterSM(ThisEvent);
         printf("One shot timer for city freq\r\n");
-        ValidCityPeriod = 16;// make city period invalid
-        CandidateCityValue = 16;
+        ValidCityPeriod = UNKNOWN_CITY;// make city period invalid
+        CandidateCityValue = UNKNOWN_CITY;
       }
       break;
     }
@@ -128,8 +129,8 @@ ES_Event RunDetectCityFrequencyService( ES_Event ThisEvent )
 uint8_t CheckCityPeriod(void) {
   static uint8_t counter = 0;
   static uint32_t CurrentCityPeriod;
-  static uint8_t LastCityValue = 16;
-  static uint8_t NoCityValue = 16; //default to return city value 16 which indicates no city found
+  static uint8_t LastCityValue = UNKNOWN_CITY;
+  static uint8_t NoCityValue = UNKNOWN_CITY; //default to return city value 16 which indicates no city found
   CurrentCityPeriod = CityPeriod;
   for (uint8_t i = 0; i<16; i++) {
   if (((ValidCityFreqs[i]+FREQ_TOL) > CurrentCityPeriod) && ((ValidCityFreqs[i]-FREQ_TOL) < CurrentCityPeriod)) {
